@@ -1,0 +1,25 @@
+# Market Data Configuration Example
+# Copy this file to config.yaml and customize for your environment
+
+# Database Configuration
+database:
+  path: "market_data.db"
+  
+# API Configuration (for future data fetching)
+api:
+  base_url: "https://api.example.com"
+  timeout: 30
+  api_key: ""  # Add your API key here if needed
+  
+# Chart Configuration
+chart:
+  style: "default"          # matplotlib style: default, seaborn, ggplot, etc.
+  figsize: [15, 8]          # figure size: [width, height]
+  dpi: 100                  # dots per inch for saved images
+  grid: true                # show grid on charts
+  
+# Logging Configuration
+logging:
+  level: "INFO"             # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "market_data.log"   # optional: log to file
