@@ -48,7 +48,7 @@ class DataManager:
             cursor = conn.cursor()
             
             # Get distinct tickers from market_data table
-            cursor.execute("SELECT DISTINCT ticker FROM market_data ORDER BY ticker")
+            cursor.execute("SELECT DISTINCT ticker FROM ohlc_data ORDER BY ticker")
             tickers = [row[0] for row in cursor.fetchall()]
             
             conn.close()
@@ -79,7 +79,7 @@ class DataManager:
             conn = sqlite3.connect(self.db_path)
             query = """
             SELECT date, open, high, low, close, volume
-            FROM market_data
+            FROM ohlc_data
             WHERE ticker = ?
             ORDER BY date ASC
             """
@@ -182,7 +182,7 @@ class DataManager:
             cursor = conn.cursor()
             
             cursor.execute(
-                "SELECT MIN(date), MAX(date) FROM market_data WHERE ticker = ?",
+                "SELECT MIN(date), MAX(date) FROM ohlc_data WHERE ticker = ?",
                 (ticker,)
             )
             
