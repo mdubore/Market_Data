@@ -161,10 +161,33 @@ class InteractiveChartEngine:
         df = self.data_manager.get_ohlcv_data(ticker)
         df = self.data_manager.aggregate_ohlcv(df, timeframe)
         
+        # Check if any indicators need a separate subplot (y2 axis indicators like RSI)
+        has_separate_indicator = False
+        if indicators and self.plugin_manager:
+            for ind in indicators:
+                plugin = self.plugin_manager.get_plugin(ind)
+                if plugin:
+                    configs = plugin.get_plot_configs()
+                    if configs and configs[0].yaxis == 'y2':
+                        has_separate_indicator = True
+                        break
+        
         # Determine number of rows for subplots
         n_subplots = 1
         if show_volume:
             n_subplots += 1
+        if has_separate_indicator:
+            n_subplots += 1
+        
+        # Calculate row heights based on subplot configuration
+        if has_separate_indicator and show_volume:
+            row_heights = [0.5, 0.25, 0.25]  # Price, Volume, Indicator
+        elif has_separate_indicator:
+            row_heights = [0.7, 0.3]  # Price, Indicator
+        elif show_volume:
+            row_heights = [0.7, 0.3]  # Price, Volume
+        else:
+            row_heights = [1.0]
         
         # Create subplots
         fig = make_subplots(
@@ -172,7 +195,7 @@ class InteractiveChartEngine:
             cols=1,
             shared_xaxes=True,
             vertical_spacing=0.03,
-            row_heights=[0.7, 0.3] if show_volume else [1.0],
+            row_heights=row_heights,
             subplot_titles=[]
         )
         
@@ -239,8 +262,16 @@ class InteractiveChartEngine:
                 df, indicators, indicator_params or {}
             )
             
-            # Add indicator traces
-            self._add_indicator_traces(fig, df_with_indicators, indicators, row=1)
+            # Determine which row to use for separate indicators (y2)
+            indicator_row = n_subplots if has_separate_indicator else 1
+            
+            # Add indicator traces - pass both price row and indicator row
+            self._add_indicator_traces(
+                fig, df_with_indicators, indicators, 
+                price_row=1, 
+                indicator_row=indicator_row,
+                show_volume=show_volume
+            )
         
         # Update layout
         self._update_layout(fig, ticker, timeframe, title)
@@ -304,6 +335,30 @@ class InteractiveChartEngine:
                 col=1
             )
         
+        # Update y-axis for indicator row (RSI etc.) if it exists
+        if has_separate_indicator:
+            indicator_row_num = n_subplots  # Last row is the indicator row
+            fig.update_yaxes(
+                title_text="RSI",
+                title_font=dict(color=theme['axis_color'], size=12),
+                tickfont=dict(color=theme['axis_color'], size=10),
+                showgrid=True,
+                gridwidth=1,
+                gridcolor=theme['grid_color'],
+                range=[0, 100],  # RSI range
+                row=indicator_row_num,
+                col=1
+            )
+            fig.update_xaxes(
+                title_font=dict(color=theme['axis_color'], size=12),
+                tickfont=dict(color=theme['axis_color'], size=10),
+                showgrid=True,
+                gridwidth=1,
+                gridcolor=theme['grid_color'],
+                row=indicator_row_num,
+                col=1
+            )
+        
         return fig
     
     def _add_indicators(
@@ -359,7 +414,9 @@ class InteractiveChartEngine:
         fig: go.Figure,
         df: pd.DataFrame,
         indicators: List[str],
-        row: int = 1
+        price_row: int = 1,
+        indicator_row: int = 1,
+        show_volume: bool = True
     ) -> None:
         """
         Add indicator traces to the figure.
@@ -368,7 +425,9 @@ class InteractiveChartEngine:
             fig (go.Figure): Plotly figure
             df (pd.DataFrame): DataFrame with calculated indicators
             indicators (List[str]): List of indicator names
-            row (int): Row number for trace placement
+            price_row (int): Row number for price-based indicators (y axis)
+            indicator_row (int): Row number for separate indicators (y2 axis)
+            show_volume (bool): Whether volume is displayed
         """
         for indicator_name in indicators:
             if not self.plugin_manager:
@@ -386,15 +445,20 @@ class InteractiveChartEngine:
                 # Find the column in dataframe
                 column_name = None
                 for col in df.columns:
-                    if col.startswith(config.name.split('(')[0]):
+                    if col.startswith(config.name.split('(')[0]) or col == config.name:
                         column_name = col
                         break
                 
                 if column_name is None or df[column_name].isna().all():
                     continue
                 
-                # Determine y-axis
-                yaxis = 'y' if config.yaxis == 'y' else 'y2'
+                # Determine which row to use based on y-axis
+                if config.yaxis == 'y2':
+                    # Separate indicators (like RSI) go to their own row
+                    target_row = indicator_row
+                else:
+                    # Price-based indicators (like SMA, Bollinger) go on price chart
+                    target_row = price_row
                 
                 # Add trace based on type
                 if config.type == 'line':
@@ -410,14 +474,13 @@ class InteractiveChartEngine:
                                 dash=config.line_dash
                             ),
                             opacity=config.opacity,
-                            yaxis=yaxis,
                             hovertemplate=(
                                 f'<b>{config.name}</b><br>'
                                 '%{x|%Y-%m-%d}<br>'
                                 'Value: %{y:.2f}<extra></extra>'
                             )
                         ),
-                        row=row,
+                        row=target_row,
                         col=1
                     )
                 
@@ -429,7 +492,6 @@ class InteractiveChartEngine:
                             name=config.name,
                             marker_color=config.color,
                             opacity=config.opacity,
-                            yaxis=yaxis,
                             showlegend=config.showlegend,
                             hovertemplate=(
                                 f'<b>{config.name}</b><br>'
@@ -437,14 +499,9 @@ class InteractiveChartEngine:
                                 'Value: %{y:.2f}<extra></extra>'
                             )
                         ),
-                        row=row,
+                        row=target_row,
                         col=1
                     )
-        
-        # Add secondary y-axis if needed
-        if any(self.plugin_manager.get_plugin(ind).get_plot_configs()[0].yaxis == 'y2' 
-               for ind in indicators if self.plugin_manager.get_plugin(ind)):
-            fig.update_layout(yaxis2=dict(overlaying="y", side="right"))
     
     def _update_layout(
         self,
