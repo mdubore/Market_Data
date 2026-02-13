@@ -311,7 +311,7 @@ def render_main_content(settings):
                 show_volume=settings['show_volume']
             )
             
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width="always")
     
     except Exception as e:
         st.error(f"Error generating chart: {e}")
@@ -328,7 +328,7 @@ def render_main_content(settings):
             # Display table
             st.dataframe(
                 df.tail(50).sort_index(ascending=False),
-                use_container_width=True,
+                use_container_width="always",
                 height=400
             )
             
