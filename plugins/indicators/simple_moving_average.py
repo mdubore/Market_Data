@@ -55,7 +55,7 @@ class SimpleMovingAverage(BaseIndicator):
         """
         # Validate input data
         is_valid, errors = self.validate_data(df)
-        if not errors:
+        if not is_valid:
             raise ValueError(f"Data validation failed: {'; '.join(errors)}")
         
         if 'close' not in df.columns:
