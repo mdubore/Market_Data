@@ -201,10 +201,22 @@ class InteractiveChartEngine:
         
         # Add volume bars
         if show_volume:
+            # Use darker colors for 'all' timeframe due to smaller bar widths in light mode
+            if timeframe == 'daily' and len(df) > 500:  # 'all' timeframe has many more data points
+                if self.theme == 'light':
+                    bullish_color = '#005522'  # Darker green for 'all' timeframe
+                    bearish_color = '#aa0000'  # Darker red for 'all' timeframe
+                else:
+                    bullish_color = self.THEMES[self.theme]['volume_bullish']
+                    bearish_color = self.THEMES[self.theme]['volume_bearish']
+            else:
+                bullish_color = self.THEMES[self.theme]['volume_bullish']
+                bearish_color = self.THEMES[self.theme]['volume_bearish']
+            
             colors = [
-                self.THEMES[self.theme]['volume_bullish'] 
+                bullish_color
                 if close >= open_ 
-                else self.THEMES[self.theme]['volume_bearish']
+                else bearish_color
                 for close, open_ in zip(df['close'], df['open'])
             ]
             
