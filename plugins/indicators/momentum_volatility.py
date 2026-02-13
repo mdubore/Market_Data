@@ -110,40 +110,16 @@ class RelativeStrengthIndex(BaseIndicator):
     def get_plot_configs(self) -> List[PlotConfig]:
         """Define how the RSI should be plotted."""
         period = self.parameters['period'].default
-        overbought = self.parameters['overbought'].default
-        oversold = self.parameters['oversold'].default
         
         return [
             PlotConfig(
-                name=f"RSI({period})",
+                name=f"RSI_{period}",
                 type="line",
                 yaxis="y2",
                 color="purple",
                 line_width=2,
                 line_dash="solid",
                 opacity=0.8,
-                legend=True,
-                showlegend=True
-            ),
-            PlotConfig(
-                name="Overbought (70)",
-                type="line",
-                yaxis="y2",
-                color="red",
-                line_width=1,
-                line_dash="dash",
-                opacity=0.5,
-                legend=True,
-                showlegend=True
-            ),
-            PlotConfig(
-                name="Oversold (30)",
-                type="line",
-                yaxis="y2",
-                color="green",
-                line_width=1,
-                line_dash="dash",
-                opacity=0.5,
                 legend=True,
                 showlegend=True
             )
@@ -251,7 +227,7 @@ class BollingerBands(BaseIndicator):
         
         return [
             PlotConfig(
-                name=f"BB Upper({period})",
+                name=f"BB_Upper_{period}",
                 type="line",
                 yaxis="y",
                 color="gray",
@@ -262,7 +238,7 @@ class BollingerBands(BaseIndicator):
                 showlegend=True
             ),
             PlotConfig(
-                name=f"BB Middle({period})",
+                name=f"BB_Middle_{period}",
                 type="line",
                 yaxis="y",
                 color="blue",
@@ -273,7 +249,7 @@ class BollingerBands(BaseIndicator):
                 showlegend=True
             ),
             PlotConfig(
-                name=f"BB Lower({period})",
+                name=f"BB_Lower_{period}",
                 type="line",
                 yaxis="y",
                 color="gray",
