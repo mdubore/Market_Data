@@ -26,7 +26,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-CONFIG_PATH = Path("config.yaml")
+CONFIG_PATH = Path("market_data_config.yaml")
 CONFIG: dict = {}
 
 def load_config(config_path: Path) -> dict:

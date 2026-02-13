@@ -1,0 +1,30 @@
+# Market Data Configuration
+# ==========================
+# Configuration for the Financial Market Data Retriever
+
+# List of tickers to monitor
+tickers:
+  - BTC-USD
+  - MSTR
+  - STRC
+  - STRD
+  - STRF
+  - STRK
+  - IBIT
+  - FBTC
+
+# Database configuration
+database:
+  path: market_data.db          # Path to SQLite database file
+  history_years: 15            # Years of historical data to fetch on first run
+
+# Schedule configuration
+schedule:
+  update_interval_seconds: 86400        # Update interval in seconds (86400 = 24 hours)
+  throttle_between_requests: 1          # Seconds to wait between ticker requests (avoid rate limiting)
+
+# Logging configuration
+logging:
+  level: INFO                   # Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s [%(levelname)s] %(message)s"
+  date_format: "%Y-%m-%d %H:%M:%S"
