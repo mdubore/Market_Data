@@ -56,8 +56,8 @@ class InteractiveChartEngine:
             'grid_color': '#26a69a',
             'candle_bullish': '#26a69a',
             'candle_bearish': '#ef5350',
-            'volume_bullish': '#1a7f6b',
-            'volume_bearish': '#c62828'
+            'volume_bullish': '#00aa44',
+            'volume_bearish': '#ff3333'
         },
         'dark': {
             'bg_color': '#1e1e1e',
