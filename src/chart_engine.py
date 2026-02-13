@@ -56,8 +56,8 @@ class InteractiveChartEngine:
             'grid_color': '#26a69a',
             'candle_bullish': '#26a69a',
             'candle_bearish': '#ef5350',
-            'volume_bullish': 'rgba(38, 166, 154, 0.8)',
-            'volume_bearish': 'rgba(239, 83, 80, 0.8)'
+            'volume_bullish': '#1a7f6b',
+            'volume_bearish': '#c62828'
         },
         'dark': {
             'bg_color': '#1e1e1e',
@@ -257,9 +257,40 @@ class InteractiveChartEngine:
         )
         
         # Update y-axes
-        fig.update_yaxes(title_text="Price ($)", row=1, col=1)
+        fig.update_yaxes(
+            title_text="Price ($)",
+            title_font=dict(color=theme['axis_color'], size=12),
+            tickfont=dict(color=theme['axis_color'], size=10),
+            showgrid=True,
+            gridwidth=1,
+            gridcolor=theme['grid_color'],
+            row=1,
+            col=1
+        )
+        
         if show_volume:
-            fig.update_yaxes(title_text="Volume", row=2, col=1)
+            fig.update_yaxes(
+                title_text="Volume",
+                title_font=dict(color=theme['axis_color'], size=12),
+                tickfont=dict(color=theme['axis_color'], size=10),
+                showgrid=True,
+                gridwidth=1,
+                gridcolor=theme['grid_color'],
+                row=2,
+                col=1
+            )
+        
+        # Update x-axis for volume row with matching colors
+        if show_volume:
+            fig.update_xaxes(
+                title_font=dict(color=theme['axis_color'], size=12),
+                tickfont=dict(color=theme['axis_color'], size=10),
+                showgrid=True,
+                gridwidth=1,
+                gridcolor=theme['grid_color'],
+                row=2,
+                col=1
+            )
         
         return fig
     
