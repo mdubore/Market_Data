@@ -286,6 +286,9 @@ class InteractiveChartEngine:
                     dict(count=1, label="1m", step="month"),
                     dict(count=3, label="3m", step="month"),
                     dict(count=6, label="6m", step="month"),
+                    dict(count=1, label="1y", step="year"),
+                    dict(count=3, label="3y", step="year"),
+                    dict(count=5, label="5y", step="year"),
                     dict(step="all", label="All")
                 ]),
                 bgcolor='rgba(200, 200, 200, 0.3)' if self.theme == 'light' else 'rgba(100, 100, 100, 0.3)',
