@@ -51,17 +51,19 @@ class InteractiveChartEngine:
         'light': {
             'bg_color': '#ffffff',
             'paper_color': '#ffffff',
-            'font_color': '#262730',
-            'grid_color': '#e0e0e0',
+            'font_color': '#000000',
+            'axis_color': '#000000',
+            'grid_color': '#26a69a',
             'candle_bullish': '#26a69a',
             'candle_bearish': '#ef5350',
-            'volume_bullish': 'rgba(38, 166, 154, 0.5)',
-            'volume_bearish': 'rgba(239, 83, 80, 0.5)'
+            'volume_bullish': 'rgba(38, 166, 154, 0.8)',
+            'volume_bearish': 'rgba(239, 83, 80, 0.8)'
         },
         'dark': {
             'bg_color': '#1e1e1e',
             'paper_color': '#1e1e1e',
             'font_color': '#e0e0e0',
+            'axis_color': '#e0e0e0',
             'grid_color': '#404040',
             'candle_bullish': '#26d07c',
             'candle_bearish': '#f6465d',
@@ -231,7 +233,8 @@ class InteractiveChartEngine:
         # Update layout
         self._update_layout(fig, ticker, timeframe, title)
         
-        # Update x-axis
+        # Update x-axis with styled range selector buttons
+        theme = self.THEMES[self.theme]
         fig.update_xaxes(
             rangeslider_visible=False,
             rangeselector=dict(
@@ -241,7 +244,13 @@ class InteractiveChartEngine:
                     dict(count=3, label="3m", step="month"),
                     dict(count=6, label="6m", step="month"),
                     dict(step="all", label="All")
-                ])
+                ]),
+                bgcolor='rgba(200, 200, 200, 0.3)' if self.theme == 'light' else 'rgba(100, 100, 100, 0.3)',
+                activecolor='rgba(100, 150, 200, 0.5)' if self.theme == 'light' else 'rgba(100, 150, 200, 0.7)',
+                font=dict(
+                    color=theme['font_color'],
+                    size=12
+                )
             ),
             row=1,
             col=1
@@ -434,12 +443,16 @@ class InteractiveChartEngine:
             xaxis=dict(
                 showgrid=True,
                 gridwidth=1,
-                gridcolor=theme['grid_color']
+                gridcolor=theme['grid_color'],
+                title_font=dict(color=theme['axis_color'], size=12),
+                tickfont=dict(color=theme['axis_color'], size=10)
             ),
             yaxis=dict(
                 showgrid=True,
                 gridwidth=1,
-                gridcolor=theme['grid_color']
+                gridcolor=theme['grid_color'],
+                title_font=dict(color=theme['axis_color'], size=12),
+                tickfont=dict(color=theme['axis_color'], size=10)
             ),
             margin=dict(l=60, r=60, t=80, b=60),
             legend=dict(
@@ -448,9 +461,10 @@ class InteractiveChartEngine:
                 y=0.99,
                 xanchor="left",
                 x=0.01,
-                bgcolor='rgba(255, 255, 255, 0.8)',
+                bgcolor='rgba(255, 255, 255, 0.8)' if self.theme == 'light' else 'rgba(30, 30, 30, 0.9)',
                 bordercolor=theme['grid_color'],
-                borderwidth=1
+                borderwidth=1,
+                font=dict(color=theme['font_color'])
             )
         )
     
