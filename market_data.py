@@ -140,22 +140,37 @@ def get_last_date(conn: sqlite3.Connection, ticker: str) -> str | None:
 
 def insert_rows(conn: sqlite3.Connection, ticker: str, df) -> int:
     """Insert a yfinance DataFrame into the database. Returns rows inserted."""
+    import pandas as pd
+    
     if df is None or df.empty:
         return 0
 
     rows = []
     for idx, row in df.iterrows():
         date_str = idx.strftime("%Y-%m-%d")
+        
+        # Use pd.notna() for reliable NaN checking on pandas Series
+        # row.get() doesn't work reliably on pandas Series objects
+        open_val = round(float(row["Open"]), 6) if pd.notna(row["Open"]) else None
+        high_val = round(float(row["High"]), 6) if pd.notna(row["High"]) else None
+        low_val = round(float(row["Low"]), 6) if pd.notna(row["Low"]) else None
+        close_val = round(float(row["Close"]), 6) if pd.notna(row["Close"]) else None
+        
+        # Handle Adj Close - fall back to Close if not available
+        adj_close = row["Adj Close"] if "Adj Close" in row.index else row["Close"]
+        adj_close_val = round(float(adj_close), 6) if pd.notna(adj_close) else None
+        
+        volume_val = int(row["Volume"]) if pd.notna(row["Volume"]) else None
+        
         rows.append((
             ticker,
             date_str,
-            round(float(row["Open"]), 6)  if row.get("Open")  is not None else None,
-            round(float(row["High"]), 6)  if row.get("High")  is not None else None,
-            round(float(row["Low"]), 6)   if row.get("Low")   is not None else None,
-            round(float(row["Close"]), 6) if row.get("Close") is not None else None,
-            round(float(row.get("Adj Close", row.get("Close", None))), 6)
-                if row.get("Adj Close", row.get("Close", None)) is not None else None,
-            int(row["Volume"]) if row.get("Volume") is not None else None,
+            open_val,
+            high_val,
+            low_val,
+            close_val,
+            adj_close_val,
+            volume_val,
         ))
 
     conn.executemany("""
