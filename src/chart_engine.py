@@ -126,10 +126,56 @@ class InteractiveChartEngine:
         """
         return self.THEMES[self.theme].copy()
     
+    def _calculate_heikin_ashi(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Calculate Heikin-Ashi candlestick values.
+        
+        Heikin-Ashi uses averaged values to smooth price action:
+        - HA Close = (Open + High + Low + Close) / 4
+        - HA Open = (Previous HA Open + Previous HA Close) / 2
+        - HA High = Max(High, HA Open, HA Close)
+        - HA Low = Min(Low, HA Open, HA Close)
+        
+        Args:
+            df (pd.DataFrame): OHLCV dataframe
+            
+        Returns:
+            pd.DataFrame: DataFrame with Heikin-Ashi OHLC values
+        """
+        ha_df = df.copy()
+        
+        # Calculate HA Close
+        ha_df['ha_close'] = (df['open'] + df['high'] + df['low'] + df['close']) / 4
+        
+        # Calculate HA Open (iteratively)
+        ha_df['ha_open'] = 0.0
+        ha_df.iloc[0, ha_df.columns.get_loc('ha_open')] = (df['open'].iloc[0] + df['close'].iloc[0]) / 2
+        
+        for i in range(1, len(ha_df)):
+            ha_df.iloc[i, ha_df.columns.get_loc('ha_open')] = (
+                ha_df['ha_open'].iloc[i-1] + ha_df['ha_close'].iloc[i-1]
+            ) / 2
+        
+        # Calculate HA High and Low
+        ha_df['ha_high'] = ha_df[['high', 'ha_open', 'ha_close']].max(axis=1)
+        ha_df['ha_low'] = ha_df[['low', 'ha_open', 'ha_close']].min(axis=1)
+        
+        # Replace original OHLC with HA values
+        ha_df['open'] = ha_df['ha_open']
+        ha_df['high'] = ha_df['ha_high']
+        ha_df['low'] = ha_df['ha_low']
+        ha_df['close'] = ha_df['ha_close']
+        
+        # Clean up temporary columns
+        ha_df = ha_df.drop(columns=['ha_open', 'ha_high', 'ha_low', 'ha_close'])
+        
+        return ha_df
+    
     def create_candlestick_chart(
         self,
         ticker: str,
         timeframe: str = 'daily',
+        chart_style: str = 'candlestick',
         indicators: Optional[List[str]] = None,
         indicator_params: Optional[Dict[str, Dict]] = None,
         title: Optional[str] = None,
@@ -141,6 +187,7 @@ class InteractiveChartEngine:
         Args:
             ticker (str): Stock ticker symbol
             timeframe (str): Time frame ('daily', 'weekly', 'monthly'). Default: 'daily'
+            chart_style (str): Chart style ('candlestick', 'heikin_ashi', 'bars'). Default: 'candlestick'
             indicators (Optional[List[str]]): List of indicator names to overlay
             indicator_params (Optional[Dict[str, Dict]]): Parameters for indicators
             title (Optional[str]): Chart title. Default: auto-generated
@@ -157,9 +204,16 @@ class InteractiveChartEngine:
         if timeframe not in ['daily', 'weekly', 'monthly']:
             raise ValueError(f"Invalid timeframe: {timeframe}")
         
+        if chart_style not in ['candlestick', 'heikin_ashi', 'bars']:
+            raise ValueError(f"Invalid chart_style: {chart_style}. Must be 'candlestick', 'heikin_ashi', or 'bars'")
+        
         # Get data
         df = self.data_manager.get_ohlcv_data(ticker)
         df = self.data_manager.aggregate_ohlcv(df, timeframe)
+        
+        # Apply Heikin-Ashi transformation if selected
+        if chart_style == 'heikin_ashi':
+            df = self._calculate_heikin_ashi(df)
         
         # Check if any indicators need a separate subplot (y2 axis indicators like RSI)
         has_separate_indicator = False
@@ -199,28 +253,54 @@ class InteractiveChartEngine:
             subplot_titles=[]
         )
         
-        # Add candlestick chart
-        fig.add_trace(
-            go.Candlestick(
-                x=df.index,
-                open=df['open'],
-                high=df['high'],
-                low=df['low'],
-                close=df['close'],
-                name='OHLC',
-                increasing_line_color=self.THEMES[self.theme]['candle_bullish'],
-                decreasing_line_color=self.THEMES[self.theme]['candle_bearish'],
-                hovertemplate=(
-                    '<b>%{x|%Y-%m-%d}</b><br>'
-                    'Open: $%{open:.2f}<br>'
-                    'High: $%{high:.2f}<br>'
-                    'Low: $%{low:.2f}<br>'
-                    'Close: $%{close:.2f}<extra></extra>'
-                )
-            ),
-            row=1,
-            col=1
-        )
+        # Add price chart based on selected style
+        if chart_style == 'bars':
+            # OHLC Bar chart
+            fig.add_trace(
+                go.Ohlc(
+                    x=df.index,
+                    open=df['open'],
+                    high=df['high'],
+                    low=df['low'],
+                    close=df['close'],
+                    name='OHLC',
+                    increasing_line_color=self.THEMES[self.theme]['candle_bullish'],
+                    decreasing_line_color=self.THEMES[self.theme]['candle_bearish'],
+                    hovertemplate=(
+                        '<b>%{x|%Y-%m-%d}</b><br>'
+                        'Open: $%{open:.2f}<br>'
+                        'High: $%{high:.2f}<br>'
+                        'Low: $%{low:.2f}<br>'
+                        'Close: $%{close:.2f}<extra></extra>'
+                    )
+                ),
+                row=1,
+                col=1
+            )
+        else:
+            # Candlestick chart (regular or Heikin-Ashi)
+            chart_name = 'Heikin-Ashi' if chart_style == 'heikin_ashi' else 'OHLC'
+            fig.add_trace(
+                go.Candlestick(
+                    x=df.index,
+                    open=df['open'],
+                    high=df['high'],
+                    low=df['low'],
+                    close=df['close'],
+                    name=chart_name,
+                    increasing_line_color=self.THEMES[self.theme]['candle_bullish'],
+                    decreasing_line_color=self.THEMES[self.theme]['candle_bearish'],
+                    hovertemplate=(
+                        '<b>%{x|%Y-%m-%d}</b><br>'
+                        'Open: $%{open:.2f}<br>'
+                        'High: $%{high:.2f}<br>'
+                        'Low: $%{low:.2f}<br>'
+                        'Close: $%{close:.2f}<extra></extra>'
+                    )
+                ),
+                row=1,
+                col=1
+            )
         
         # Add volume bars
         if show_volume:
