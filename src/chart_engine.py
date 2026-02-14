@@ -418,17 +418,34 @@ class InteractiveChartEngine:
                 col=1
             )
         
-        # Update y-axis for indicator row (RSI etc.) if it exists
+        # Update y-axis for indicator row (RSI, Market Cipher, etc.) if it exists
         if has_separate_indicator:
             indicator_row_num = n_subplots  # Last row is the indicator row
+            
+            # Determine indicator title and range based on which indicator is active
+            indicator_title = "Indicator"
+            indicator_range = [0, 100]  # Default RSI range
+            
+            if indicators and self.plugin_manager:
+                for ind in indicators:
+                    plugin = self.plugin_manager.get_plugin(ind)
+                    if plugin:
+                        configs = plugin.get_plot_configs()
+                        if configs and configs[0].yaxis == 'y2':
+                            indicator_title = plugin.name
+                            # Market Cipher uses -100 to 100 range
+                            if 'Market Cipher' in plugin.name or 'MCA' in plugin.name or 'MCB' in plugin.name:
+                                indicator_range = [-100, 100]
+                            break
+            
             fig.update_yaxes(
-                title_text="RSI",
+                title_text=indicator_title,
                 title_font=dict(color=theme['axis_color'], size=12),
                 tickfont=dict(color=theme['axis_color'], size=10),
                 showgrid=True,
                 gridwidth=1,
                 gridcolor=theme['grid_color'],
-                range=[0, 100],  # RSI range
+                range=indicator_range,
                 row=indicator_row_num,
                 col=1
             )

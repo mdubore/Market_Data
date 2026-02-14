@@ -9,10 +9,12 @@ Available Indicators:
 - Exponential Moving Average (EMA)
 - Relative Strength Index (RSI)
 - Bollinger Bands
+- Market Cipher A (Wave Trend)
+- Market Cipher B (Multi-Indicator Confluence)
 
 New indicators can be added by creating new modules in this directory
 that inherit from BaseIndicator.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "Market Data Team"
