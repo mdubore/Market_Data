@@ -128,6 +128,18 @@ def render_sidebar():
         "Monthly": "monthly"
     }
     
+    # Chart style selector
+    chart_style = st.sidebar.selectbox(
+        "Chart Style",
+        options=["Candlestick", "Heikin-Ashi", "OHLC Bars"],
+        help="Select the chart visualization style"
+    )
+    chart_style_map = {
+        "Candlestick": "candlestick",
+        "Heikin-Ashi": "heikin_ashi",
+        "OHLC Bars": "bars"
+    }
+    
     show_volume = st.sidebar.checkbox(
         "Show Volume",
         value=True,
@@ -245,6 +257,7 @@ def render_sidebar():
     return {
         'ticker': selected_ticker,
         'timeframe': timeframe_map[timeframe],
+        'chart_style': chart_style_map[chart_style],
         'show_volume': show_volume,
         'theme': theme_lower,
         'width': width,
@@ -306,6 +319,7 @@ def render_main_content(settings):
             fig = st.session_state.chart_engine.create_candlestick_chart(
                 ticker=ticker,
                 timeframe=timeframe,
+                chart_style=settings['chart_style'],
                 indicators=indicators if indicators else None,
                 indicator_params=indicator_params if indicator_params else None,
                 show_volume=settings['show_volume']
